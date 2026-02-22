@@ -40,8 +40,16 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
         
         let name: String = txtName.text!
         
-        names.append(name)
-        tblNamesList.reloadData()
+        if ( validate(nameInput: name) == true) {
+            
+            names.append(name)
+            tblNamesList.reloadData()
+            
+        }
+        
+        else {
+            print("The name wasn't added")
+        }
         
     }
     
@@ -72,8 +80,6 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
         }
     }
     
-    
-    
     /**
      Function: Load Button
      Loads the CSV file that was previously saved
@@ -100,6 +106,41 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
         }
         
         tblNamesList.reloadData()
+        
+    }
+    
+    
+    //MARK: Helper Functions
+    
+    /**
+     Function: validate
+     - Validate a string to ensure that it is not blank, is a String and that it is less than 30 characters in length
+    - Parameters: nameInput - String - be the text to validate from an input
+    - Returns: Bool - True if it is valid, false if it is not
+     */
+    
+    func validate(nameInput: String) -> Bool {
+        
+        //Existence Check
+        if (nameInput != "") {
+         
+            //Type Check
+            if (String(nameInput) != nil){
+                
+                
+                //Range Check
+                if (nameInput.count < 30) {
+                    
+                    return true
+                    
+                }
+                
+            }
+            
+        }
+        
+        // if it does not return true and is invalid; return false
+        return false
         
     }
     
