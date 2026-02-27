@@ -38,18 +38,27 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
     
     @IBAction func btnAddName(_ sender: Any) {
         
+        //Save name input to variable
         let name: String = txtName.text!
         
-        if ( validate(nameInput: name) == true) {
+        //If the variable given to the validate function is true then...
+        if ( validate(nameInput: name) == true ) {
             
+            //... append the name to the names array, sort it and reload the tableview
             names.append(name)
+            names.sort()
             tblNamesList.reloadData()
+            
+            
+            
             
         }
         
+        //else an error statement is made (should be a label, but also I didn't get time to make a label...)
         else {
             print("The name wasn't added")
         }
+        
         
     }
     
@@ -101,10 +110,12 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
                 print("new array: \(names)")
             }
         }
+        //catch here stops the program from crashing and gives a lil error message
         catch {
             print("Error reading file :(")
         }
         
+        //reload the table view with the new array data.
         tblNamesList.reloadData()
         
     }
@@ -126,7 +137,6 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
          
             //Type Check
             if (String(nameInput) != nil){
-                
                 
                 //Range Check
                 if (nameInput.count < 30) {
