@@ -43,15 +43,39 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
         
         //If the variable given to the validate function is true then...
         if ( validate(nameInput: name) == true ) {
-            
-            //... append the name to the names array, sort it and reload the tableview
-            names.append(name)
-            names.sort()
-            tblNamesList.reloadData()
-            
-            
-            
-            
+
+            //found var to record if the value is in the array or not
+            var found: Bool = false
+
+            //if small, run through linear search to see if value is in array
+            if names.count < 10 {
+                found = linearSearch(array: names, searchFor: name)
+            }
+            //else if large, run through binary search AFTER quick sort
+            else {
+                names = quickSort(array: names)
+                found = binarySearch(array: names, searchFor: name)
+            }
+
+            //only add the name if it wasn't found
+            if found == false {
+                //... append the name to the names array, sort it and reload the tableview
+                names.append(name)
+                
+                //Sort the names depending on the array length
+
+                if names.count < 10 {
+                    names = selectionSort(array: names)
+                    print("Selection sort was used")
+                }
+                else {
+                    names = quickSort(array: names)
+                    print("Quick sort was used")
+                }
+                
+                
+                tblNamesList.reloadData()
+            }
         }
         
         //else an error statement is made (should be a label, but also I didn't get time to make a label...)
@@ -130,16 +154,16 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
     - Returns: Bool - True if it is valid, false if it is not
      */
     
-    func validate(nameInput: String) -> Bool {
+    func validate(nameInput: String?) -> Bool {
         
         //Existence Check
         if (nameInput != "") {
          
             //Type Check
-            if (String(nameInput) != nil){
+            if (nameInput != nil) {
                 
                 //Range Check
-                if (nameInput.count < 30) {
+                if (nameInput!.count < 30) {
                     
                     return true
                     
@@ -154,7 +178,120 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
         
     }
     
+    //MARK: Sort Functions
     
+    /**
+     Function: Quick Sort
+     - A sort that takes in an array and returns a sorted array using a divide and conquer algorithm
+     
+     - Parameters: Array - Strings: The list to sort
+     - Returns: Array - String : The now sorted list
+     */
+    
+    func quickSort(array: [String]) -> [String] {
+        
+        var less: [String] = []
+        var equal: [String] = []
+        var greater: [String] = []
+        
+        if array.count > 1 {
+            let pivot = array[array.count - 1]
+            for x in array {
+                if x < pivot {
+                    less.append(x)
+                }
+                if x == pivot {
+                    equal.append(x)
+                }
+                if x > pivot {
+                    greater.append(x)
+                }
+            }
+            return (quickSort(array: less) + equal + quickSort(array: greater))
+        } else {
+            return array
+        }
+    }
+
+
+    /**
+     Function: Selection Sort
+
+- A sort that takes in an array and returns a sorted array comparing each value one-by-one
+     - Parameters: Array - Strings: The list to sort
+     - Returns: Array - String : The now sorted list
+
+     */
+    
+    func selectionSort(array: [String]) -> [String] {
+        if array.count > 1 {
+            var arr = array
+            for x in 0 ..< arr.count - 1 {
+                var lowest = x
+                for y in x + 1 ..< arr.count {
+                    if arr[y] < arr[lowest] {
+                        lowest = y
+                    }
+                }
+                if x != lowest {
+                    arr.swapAt(x, lowest)
+                }
+            }
+            return arr
+        } else {
+            return array
+        }
+    }
+
+
+//MARK: Search Functions
+
+/**
+Function: Linear Search
+- A search that takes in an array and a value to see whether the value exists in the array;
+Checking one-by-one.
+- Parameters: Array - Strings: The list to search
+             Value - String: The value to search for
+- Returns: Bool - True if the value is found, false if it is not
+*/
+
+func linearSearch(array: [String], searchFor: String) -> Bool {
+   for currentValue in array {
+      if searchFor == currentValue {
+         return true
+      }
+   }
+   return false
+}
+
+/**
+Function: Binary Search
+- A search that takes in an array and a value to see whether the value exists in the array;
+Checks by dividing the array in half, comparing whether the value is larger or smaller and halving again.
+- Parameters: Array - Strings: The list to search
+             Value - String: The value to search for
+- Returns: Bool - True if the value is found, false if it is not
+*/
+
+func binarySearch(array: [String], searchFor: String) -> Bool {
+    var firstIndex = 0
+    var lastIndex = array.count - 1
+    
+    while firstIndex <= lastIndex {
+        let middleIndex = (firstIndex + lastIndex) / 2
+        if array[middleIndex] == searchFor {
+            return true
+        }
+        if searchFor < array[middleIndex] {
+            lastIndex = middleIndex - 1
+        }
+        if searchFor > array[middleIndex] {
+            firstIndex = middleIndex + 1
+        }
+    }
+    return false
+}
+
     
     //MARK: TableView functions
     
