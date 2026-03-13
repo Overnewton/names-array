@@ -15,13 +15,15 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
     @IBOutlet weak var txtName: UITextField!
     
     //Outputs
-    
     @IBOutlet weak var tblNamesList: UITableView!
-    
+    @IBOutlet weak var lblNamesCount: UILabel!
+    @IBOutlet weak var lblShortestName: UILabel!
+    @IBOutlet weak var lblLongestName: UILabel!
+    @IBOutlet weak var lblAverageName: UILabel!
     
     //MARK: Global Data
     var names: [String] = []
-   
+    
     //URL for the root folder to save CSVs to
     let directoryURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
     
@@ -30,7 +32,7 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
     
     /**
      Function: Add Name
-       
+     
      - Add a name to the names array and refresh table view
      - Todo: Give validation to ensure that no blank names can be appended to the array
      - Parameter _: A click or given form of interaction to start the button function
@@ -43,36 +45,20 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
         
         //If the variable given to the validate function is true then...
         if ( validate(nameInput: name) == true ) {
-
+            
             //found var to record if the value is in the array or not
-            var found: Bool = false
-
-            //if small, run through linear search to see if value is in array
-            if names.count < 10 {
-                found = linearSearch(array: names, searchFor: name)
-            }
-            //else if large, run through binary search AFTER quick sort
-            else {
-                names = quickSort(array: names)
-                found = binarySearch(array: names, searchFor: name)
-            }
-
+            let found: Bool = nameSearch(name: name)
+            
+            
             //only add the name if it wasn't found
             if found == false {
                 //... append the name to the names array, sort it and reload the tableview
                 names.append(name)
                 
-                //Sort the names depending on the array length
-
-                if names.count < 10 {
-                    names = selectionSort(array: names)
-                    print("Selection sort was used")
-                }
-                else {
-                    names = quickSort(array: names)
-                    print("Quick sort was used")
-                }
+                //Calculate required statistics for the name once appended
+                calculate(nameArray: names )
                 
+                sortNames()
                 
                 tblNamesList.reloadData()
             }
@@ -83,6 +69,7 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
             print("The name wasn't added")
         }
         
+        txtName.text = ""
         
     }
     
@@ -95,7 +82,7 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
         
         //create a new string of all of our array items together
         let str = names.joined(separator: ",")
-
+        
         //filename is made for the CSV that the array will save to
         let filename = URL(fileURLWithPath: "names.csv", relativeTo: directoryURL)
         
@@ -106,10 +93,10 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
         do {
             try str.write(to: filename, atomically: true, encoding: String.Encoding.utf8)
             print("file was successfully exported")
-               }
+        }
         //Else; it will state that the file could not be exported.
         catch {
-        print("file could not be exported")
+            print("file could not be exported")
         }
     }
     
@@ -119,7 +106,7 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
      */
     
     @IBAction func btnLoad(_ sender: Any) {
-
+        
         let filename = URL(fileURLWithPath: "names.csv", relativeTo: directoryURL)
         
         //attempt the load the contents of the file to a data variable
@@ -150,15 +137,15 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
     /**
      Function: validate
      - Validate a string to ensure that it is not blank, is a String and that it is less than 30 characters in length
-    - Parameters: nameInput - String - be the text to validate from an input
-    - Returns: Bool - True if it is valid, false if it is not
+     - Parameters: nameInput - String - be the text to validate from an input
+     - Returns: Bool - True if it is valid, false if it is not
      */
     
     func validate(nameInput: String?) -> Bool {
         
         //Existence Check
         if (nameInput != "") {
-         
+            
             //Type Check
             if (nameInput != nil) {
                 
@@ -168,9 +155,7 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
                     return true
                     
                 }
-                
             }
-            
         }
         
         // if it does not return true and is invalid; return false
@@ -178,7 +163,88 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
         
     }
     
+    /**
+     Function : Calculate
+     Calculates the longest, shortest, current(i.e last of the array) and the average username length
+     
+     - Parameter : nameArray: [String] - The array used to calculate the above
+     
+     */
+    
+    func calculate(nameArray: [String]) {
+        
+        //variables to store name character info during the loop to display after
+        var longest: Int = 0
+        var shortest: Int = 0
+        var average: Float = 0
+        
+        
+        //loop through given array
+        for name in nameArray {
+            
+            //store the total number of characters
+            average += Float(name.count)
+            print("total is \(average)")
+            
+            //if the name is longer than than the previous, store it
+            if name.count > longest {
+                longest = name.count
+                print ("New longest name is \(longest)")
+            }
+            
+            //if the name is shorter than previous, or if it's 0 (hasn't been stored yet)
+            if name.count < shortest || shortest == 0{
+                shortest = name.count
+                print ("New shortest name is \(shortest)")
+            }
+            
+        }
+        
+        
+        //calculate average by dividing total to the number of items in array
+        average = average / Float(nameArray.count)
+        
+        //Test debug statements
+        print("average is \(average)")
+        print("number of names are \(nameArray.count)")
+        print("Final Shortest name is \(shortest)")
+        print("Final Longest name is \(longest)")
+        
+        //Send all values to labels
+        lblNamesCount.text = String(nameArray.count)
+        lblShortestName.text = String(shortest)
+        lblLongestName.text = String(longest)
+        lblAverageName.text = String(format: "%0.1f", average)
+        
+    }
+    
+    
+    
     //MARK: Sort Functions
+    
+    
+    /**
+     Function: Sort
+     
+     Decides what sort funciton to use and saves it back to the array
+     */
+    
+    func sortNames() {
+        
+        //Sort the names depending on the array length
+        
+        if names.count < 10 {
+            names = selectionSort(array: names)
+            print("Selection sort was used")
+        }
+        else {
+            names = quickSort(array: names)
+            print("Quick sort was used")
+        }
+        
+    }
+    
+    
     
     /**
      Function: Quick Sort
@@ -212,15 +278,15 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
             return array
         }
     }
-
-
+    
+    
     /**
      Function: Selection Sort
-
-- A sort that takes in an array and returns a sorted array comparing each value one-by-one
+     
+     - A sort that takes in an array and returns a sorted array comparing each value one-by-one
      - Parameters: Array - Strings: The list to sort
      - Returns: Array - String : The now sorted list
-
+     
      */
     
     func selectionSort(array: [String]) -> [String] {
@@ -242,56 +308,77 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
             return array
         }
     }
-
-
-//MARK: Search Functions
-
-/**
-Function: Linear Search
-- A search that takes in an array and a value to see whether the value exists in the array;
-Checking one-by-one.
-- Parameters: Array - Strings: The list to search
-             Value - String: The value to search for
-- Returns: Bool - True if the value is found, false if it is not
-*/
-
-func linearSearch(array: [String], searchFor: String) -> Bool {
-   for currentValue in array {
-      if searchFor == currentValue {
-         return true
-      }
-   }
-   return false
-}
-
-/**
-Function: Binary Search
-- A search that takes in an array and a value to see whether the value exists in the array;
-Checks by dividing the array in half, comparing whether the value is larger or smaller and halving again.
-- Parameters: Array - Strings: The list to search
-             Value - String: The value to search for
-- Returns: Bool - True if the value is found, false if it is not
-*/
-
-func binarySearch(array: [String], searchFor: String) -> Bool {
-    var firstIndex = 0
-    var lastIndex = array.count - 1
     
-    while firstIndex <= lastIndex {
-        let middleIndex = (firstIndex + lastIndex) / 2
-        if array[middleIndex] == searchFor {
-            return true
+    
+    //MARK: Search Functions
+    
+    
+    /**
+     Function: nameSearch
+     
+     Chooses a search depending on the names array length to run and returns true if the given parameter `name` is found
+     
+     - Parameters: name: String - the name to search in the array
+     */
+    
+    func nameSearch(name: String) -> Bool {
+        
+        //if small, run through linear search to see if value is in array
+        if names.count < 10 {
+            return linearSearch(array: names, searchFor: name)
         }
-        if searchFor < array[middleIndex] {
-            lastIndex = middleIndex - 1
-        }
-        if searchFor > array[middleIndex] {
-            firstIndex = middleIndex + 1
+        //else if large, run through binary search AFTER quick sort
+        else {
+            names = quickSort(array: names)
+            return binarySearch(array: names, searchFor: name)
         }
     }
-    return false
-}
-
+    
+    /**
+     Function: Linear Search
+     - A search that takes in an array and a value to see whether the value exists in the array; Checking one-by-one.
+     - Parameters: Array - Strings: The list to search
+     Value - String: The value to search for
+     - Returns: Bool - True if the value is found, false if it is not
+     */
+    
+    func linearSearch(array: [String], searchFor: String) -> Bool {
+        for currentValue in array {
+            if searchFor == currentValue {
+                return true
+            }
+        }
+        return false
+    }
+    
+    /**
+     Function: Binary Search
+     - A search that takes in an array and a value to see whether the value exists in the array;
+     Checks by dividing the array in half, comparing whether the value is larger or smaller and halving again.
+     - Parameters: Array - Strings: The list to search
+     Value - String: The value to search for
+     - Returns: Bool - True if the value is found, false if it is not
+     */
+    
+    func binarySearch(array: [String], searchFor: String) -> Bool {
+        var firstIndex = 0
+        var lastIndex = array.count - 1
+        
+        while firstIndex <= lastIndex {
+            let middleIndex = (firstIndex + lastIndex) / 2
+            if array[middleIndex] == searchFor {
+                return true
+            }
+            if searchFor < array[middleIndex] {
+                lastIndex = middleIndex - 1
+            }
+            if searchFor > array[middleIndex] {
+                firstIndex = middleIndex + 1
+            }
+        }
+        return false
+    }
+    
     
     //MARK: TableView functions
     
@@ -310,18 +397,18 @@ func binarySearch(array: [String], searchFor: String) -> Bool {
     
     //Tableview swipe to delete
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
-
-       if editingStyle == .delete {
-
-       names.remove(at: indexPath.row)
-
-           tblNamesList.reloadData()
-
-      }
-
+        
+        
+        //if swiped and pressed; remove the name and recalculate stats
+        if editingStyle == .delete {
+            names.remove(at: indexPath.row)
+            tblNamesList.reloadData()
+            calculate(nameArray: names)
+        }
+        
     }
     
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
@@ -330,7 +417,7 @@ func binarySearch(array: [String], searchFor: String) -> Bool {
         tblNamesList.dataSource = self
         
     }
-
-
+    
+    
 }
 
